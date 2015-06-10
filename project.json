@@ -1,0 +1,19 @@
+{
+  "project_type": "javascript",
+  "debugMode" : 1,
+  "showFPS" : false,
+  "frameRate" : 60,
+  "id" : "WebGL-output",
+  "renderMode" : 0,
+  "engineDir":"kkframe",
+  "modules" : ["common", "extras"],
+
+  "jsList" : [
+    "libs/stats.js",
+    "libs/OrbitControls.js",
+    "libs/tween.min.js",
+
+    "src/playScene.js",
+    "src/RotateControl.js"
+  ]
+}
