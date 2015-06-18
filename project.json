@@ -12,6 +12,9 @@
     "libs/stats.js",
     "libs/OrbitControls.js",
     "libs/tween.min.js",
+    "libs/OBJLoader.js",
+    "libs/MTLLoader.js",
+    "libs/OBJMTLLoader.js",
 
     "src/playScene.js",
     "src/RotateControl.js"

@@ -120,6 +120,8 @@
                 <file name="event/KKEvent.js"/>
                 <file name="event/KKEventListener.js"/>
                 <file name="event/KKEventManager.js"/>
+                <file name="menu/DLabel.js"/>
+                <file name="menu/KKMenu.js"/>
                 <file name="extras/GeometryUtils.js"/>
                 <file name="extras/ImageUtils.js"/>
                 <file name="extras/SceneUtils.js"/>
@@ -191,6 +193,9 @@
                 <file name="libs/stats.js"/>
                 <file name="libs/OrbitControls.js"/>
                 <file name="libs/tween.min.js"/>
+                <file name="libs/OBJLoader.js"/>
+                <file name="libs/MTLLoader.js"/>
+                <file name="libs/OBJMTLLoader.js"/>
                 <file name="src/playScene.js"/>
                 <file name="src/RotateControl.js"/>
                 <file name="main.js"/>

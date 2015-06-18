@@ -119,30 +119,6 @@ kk.OrbitControls = kk.Class.extend({
 
     },
 
-    zoomIn : function ( zoomScale ) {
-
-        if ( zoomScale === undefined ) {
-
-            zoomScale = this.getZoomScale();
-
-        }
-
-        this.scale /= zoomScale;
-
-    },
-
-    zoomOut : function ( zoomScale ) {
-
-        if ( zoomScale === undefined ) {
-
-            zoomScale = this.getZoomScale();
-
-        }
-
-        this.scale *= zoomScale;
-
-    },
-
     pan : function ( distance ) {
 
         distance.transformDirection( this.object.matrix );
@@ -210,16 +186,9 @@ kk.OrbitControls = kk.Class.extend({
 
 
     getAutoRotationAngle:function() {
-
         return 2 * Math.PI / 60 / 60 * this.autoRotateSpeed;
-
     },
 
-    getZoomScale:function() {
-
-        return Math.pow( 0.95, this.userZoomSpeed );
-
-    },
     onPanStart : function(event) {
         if ( this.enabled === false ) return;
         if ( this.userRotate === false ) return;
@@ -238,6 +207,37 @@ kk.OrbitControls = kk.Class.extend({
 
         this.rotateStart.copy( this.rotateEnd );
     },
+
+    zoomIn : function ( zoomScale ) {
+        if ( zoomScale === undefined ) {
+            zoomScale = this.getZoomScale();
+        }
+        this.scale /= zoomScale;
+    },
+    zoomOut : function ( zoomScale ) {
+        if ( zoomScale === undefined ) {
+            zoomScale = this.getZoomScale();
+        }
+        this.scale *= zoomScale;
+    },
+    getZoomScale:function() {
+        return Math.pow( 0.95, this.userZoomSpeed );
+    },
+    onMouseWheel : function( event ) {
+        if ( this.enabled === false ) return;
+        if ( this.userZoom === false ) return;
+        var delta = 0;
+        if ( event.wheelDelta ) { // WebKit / Opera / Explorer 9
+            delta = event.wheelDelta;
+        } else if ( event.detail ) { // Firefox
+            delta = - event.detail;
+        }
+        if ( delta > 0 ) {
+            this.zoomOut();
+        } else {
+            this.zoomIn();
+        }
+    },
     registerListener : function() {
         var scope = this;
         this.listener = kk.EventListener.create({
@@ -251,10 +251,12 @@ kk.OrbitControls = kk.Class.extend({
             }
         });
         kk.eventManager.addListener(this.listener);
+        this.domElement.addEventListener( 'mousewheel', this.onMouseWheel.bind(this), false );
+        this.domElement.addEventListener( 'DOMMouseScroll', this.onMouseWheel.bind(this), false ); // firefox
     },
     cancelListener:function(){
         if(this.listener != undefined)
-            kk.eventManager.addListener(this.listener);
+            kk.eventManager.removeListener(this.listener);
     }
 
 });

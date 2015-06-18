@@ -2,11 +2,13 @@
  * Created by kk on 2015/5/11.
  */
 
+var g_msg;
+var g_msg2;
 var PlayScene = kk.Class.extend({
     step:0,
     step2:0,
     stats:null,
-    controls:null,
+    control:null,
     ctor:function(){
         var scope = this;
         this.step = 0;
@@ -18,9 +20,11 @@ var PlayScene = kk.Class.extend({
         this.sceneControl.userPan = false;
         //this.sceneControl.fixedUpDown = true;
         //this.sceneControl.autoRotate = true;
-        this.sceneControl.setEnabled(false);
+        //this.sceneControl.setEnabled(false);
         kk.director.getScheduler().scheduleUpdate(this.sceneControl, 0, false);
+        this.control = "camera";
 
+        /*
         var listener1 = kk.EventListener.create({
             event: kk.EventListener.TOUCH,
             swallowTouches: true,
@@ -28,7 +32,7 @@ var PlayScene = kk.Class.extend({
                 scope.onTap({x:e.center.x, y:e.center.y});
             }
         });
-        kk.eventManager.addListener(listener1);
+        kk.eventManager.addListener(listener1);*/
         kk.director.getScheduler().scheduleUpdate(this, 0, false);
 
     },
@@ -45,20 +49,21 @@ var PlayScene = kk.Class.extend({
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
         // create a render and set the size
-        renderer = new THREE.WebGLRenderer();
+        renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setClearColor(new THREE.Color(0xaaaaaa));
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMapEnabled = true;
         //renderer.shadowMapType = THREE.PCFShadowMap;
+        renderer.autoClear = false; // To allow render overlay on top of sprited sphere
 
         // add the output of the renderer to the html element
         document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
         // position and point the camera to the center of the scene
-        camera.position.x = 20;
-        camera.position.y = 55;
+        camera.position.x = 30;
+        camera.position.y = 30;
         camera.position.z = 50;
-        //camera.lookAt(new THREE.Vector3(0, 25, 0));
+        camera.lookAt(new THREE.Vector3(0, 10, 0));
 
         // show axes in the screen
         var axes = new THREE.AxisHelper(20);
@@ -67,6 +72,63 @@ var PlayScene = kk.Class.extend({
         this.initLight();
 
         this.initObjs();
+
+        this.initMenu();
+    },
+    initMenu:function(){
+        this.sceneOrtho = new THREE.Scene();
+        this.cameraOrtho = new THREE.OrthographicCamera(-window.innerWidth*0.5, window.innerWidth*0.5, window.innerHeight*0.5, -window.innerHeight*0.5, -1, 10);
+        this.cameraOrtho.position.z = 10;
+        this.cameraOrtho.lookAt(new THREE.Vector3(0, 0, 0));
+        var scope = this;
+
+        var t = THREE.ImageUtils.loadTexture( 'res/switchButton.png',undefined, createHudSprite);
+        function createHudSprite(texture){
+            var material = new THREE.SpriteMaterial( { map: texture } );
+            var imageWidth = texture.image.width / 2;
+            var imageHeight = texture.image.height / 2;
+            var sprite = new THREE.Sprite( material );
+            sprite.scale.set( imageWidth, imageHeight, 1 );
+            sprite.position.set( 0,-window.innerHeight*0.3, 1 ); // bottom left
+            var menu = new kk.Menu(sprite, scope.sceneOrtho, scope.cameraOrtho, function(){
+                scope.switchControl();
+            });
+            //scope.sceneOrtho.add( sprite );
+
+        }
+
+        /*
+        var m2 = new THREE.SpriteMaterial( { map: t, useScreenCoordinates: false, color: 0xff0000 } );
+        var sprite2 = new THREE.Sprite( m2 );
+        sprite2.position.set( -5, 10, 5 );
+        sprite2.scale.set( 6, 6, 1.0 ); // imageWidth, imageHeight
+        scene.add( sprite2 );*/
+
+        /*
+        g_msg = new d.Label(" World! !",{ fontsize: 32} );
+        g_msg.sprite.position.set(0,0,0);
+        //scene.add( this.msg.sprite );
+        g_msg.setString("sdfsdfsdfsdf")
+        this.sceneOrtho.add( g_msg.sprite );
+
+        g_msg2 = new d.Label(" World! !",{ fontsize: 32} );
+        g_msg2.sprite.position.set(0,-window.innerHeight*0.2,0);
+        this.sceneOrtho.add( g_msg2.sprite );*/
+    },
+    switchControl:function(){
+        //g_msg.setString("");
+        if(this.control === "camera"){
+            kk.log("switch1..")
+            this.sceneControl.setEnabled(false);
+            this.objControl = new kk.RotateControl(this.cube, camera);
+            this.control = "obj";
+        }
+        else{
+            kk.log("switch2..")
+            this.sceneControl.setEnabled(true);
+            this.objControl.removeSelf();
+            this.control = "camera";
+        }
     },
     initLight:function() {
         var ambientLight = new THREE.AmbientLight(0x555555);
@@ -128,20 +190,41 @@ var PlayScene = kk.Class.extend({
         plane.position.y = -5;
         scene.add(plane);
 
-        this.createControlObj();
+        this.createControlObj2();
     },
     createControlObj:function(){
         var cubeGeometry = new THREE.BoxGeometry(10, 10, 10);
         var cubeMaterial = new THREE.MeshLambertMaterial({color: 0xaaaadd});
-        var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        cube.castShadow = true;
+        this.cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        this.cube.castShadow = true;
         // position the cube
-        cube.position.x = 0;
-        cube.position.z = 0;
-        cube.position.y = 15;
-        scene.add(cube);
+        this.cube.position.x = 0;
+        this.cube.position.z = 0;
+        this.cube.position.y = 15;
+        scene.add(this.cube);
 
-        var ctr = new kk.RotateControl(cube, camera);
+        //this.objControl = new kk.RotateControl(cube, camera);
+    },
+    createControlObj2:function(){
+        var loader = new THREE.OBJMTLLoader();
+        var scope = this;
+        loader.load('res/1.obj', 'res/1.mtl', function (object) {
+            object.traverse(function(child)
+            {
+                if (child instanceof THREE.Mesh)
+                {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            object.scale.set(0.3, 0.3, 0.3);
+            object.position.set(0,15,0)
+            object.castShadow = true;
+            object.receiveShadow = true;
+
+            scope.cube = object;
+            scene.add(scope.cube);
+        });
     },
     update:function(dt){
         this.stats.update();
@@ -154,7 +237,10 @@ var PlayScene = kk.Class.extend({
         this.pointLight.position.x = 20 * (Math.cos(this.step));
         this.pointLight.position.z = 20 * (Math.sin(this.step));
 
+        renderer.clear();
         renderer.render(scene, camera);
+        renderer.clearDepth();
+        renderer.render(this.sceneOrtho, this.cameraOrtho);
     },
     onTap:function(event){
     },

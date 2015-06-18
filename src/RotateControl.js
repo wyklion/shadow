@@ -5,6 +5,8 @@
 kk.RotateControl = kk.Class.extend({
     listener:null,
     enabled:true,
+    updating:false,
+    updateAngle:0,
     ctor: function (object, camera) {
         this.object = object;
         this.init();
@@ -22,7 +24,7 @@ kk.RotateControl = kk.Class.extend({
         this.windowHalfX = window.innerWidth / 2;
         this.windowHalfY = window.innerHeight / 2;
 
-        this.mouseDown = false;
+        this._panStart = false;
         this.lastMoveTimestamp = 0;
         this.moveReleaseTimeDelta = 50;
     },
@@ -48,51 +50,82 @@ kk.RotateControl = kk.Class.extend({
     {
         return Math.min(Math.max(value, min), max);
     },
-    onPanStart : function(event) {
+    onPress:function(event){
         if ( this.enabled === false ) return;
-
-        this.mouseDown = true;
+        this.unschedule();
+    },
+    onPan:function(e){
+        if ( this.enabled === false ) return;
+        if(this.updateStatus !== "") return;
+        if(e.type=="panstart")
+            this.onPanStart({x: e.center.x,y: e.center.y});
+        else if(e.type == "panmove"){
+            this.onPanMove({x: e.center.x,y: e.center.y,deltaX: e.deltaX, deltaY: e.deltaY});
+        }
+        else if(e.type == "panend")
+            this.onPanEnd({x: e.center.x,y: e.center.y});
+    },
+    onPanStart : function(event) {
+        //msg.setString("onPanStart...");
+        this._panStart = true;
         this.startPoint.set(event.x,event.y);
 
         this.rotateStart.copy( this.projectOnTrackball(0,0));
         this.rotateEnd.copy(this.rotateStart);
+        kk.log("onPanStart:",event.x,event.y,this.deltaX,this.deltaY);
     },
     onPanMove:function(event){
+        if(!this._panStart){
+            return this.onPanStart(event);
+        }
+        //if(event.x === this.startPoint.x && event.y === this.startPoint.y)
+        //    return;//panEnd
+
         this.deltaX = event.x - this.startPoint.x;
         this.deltaY = event.y - this.startPoint.y;
 
         this.handleRotation();
 
-        this.lastPoint.copy(this.startPoint);
         this.startPoint.x = event.x;
         this.startPoint.y = event.y;
 
         this.lastMoveTimestamp = new Date();
+        kk.log("onPanMove:",event.x,event.y,this.deltaX,this.deltaY);
     },
     onPanEnd:function(event){
-        if (new Date().getTime() - this.lastMoveTimestamp.getTime() < this.moveReleaseTimeDelta)
+        if(!this._panStart) return;
+        //g_msg.setString("onPanEnd...");
+        if (new Date().getTime() - this.lastMoveTimestamp.getTime() > this.moveReleaseTimeDelta)
         {
-            this.deltaX = event.x - this.lastPoint.x;
-            this.deltaY = event.y - this.lastPoint.y;
-            this.schedule();
+            this.deltaX = event.x - this.startPoint.x;
+            this.deltaY = event.y - this.startPoint.y;
         }
+        else{
+            this.schedule("pan");
+        }
+        /*
         else{
             this.deltaX = 0;
             this.deltaY = 0;
-        }
+        }*/
 
-        this.mouseDown = false;
+        this._panStart = false;
     },
     handleRotation:function(){
         this.rotateEnd = this.projectOnTrackball(this.deltaX, this.deltaY);
 
-        var rotateQuaternion = this.rotateMatrix(this.rotateStart, this.rotateEnd);
+        var quaternion = this.rotateMatrix(this.rotateStart, this.rotateEnd);
         var curQuaternion = this.object.quaternion;
-        curQuaternion.multiplyQuaternions(rotateQuaternion, curQuaternion);
+        curQuaternion.multiplyQuaternions(quaternion, curQuaternion);
         curQuaternion.normalize();
         this.object.setRotationFromQuaternion(curQuaternion);
-
         this.rotateEnd.copy(this.rotateStart);
+    },
+    executeRoation:function(quaternion){
+        var curQuaternion = this.object.quaternion;
+        curQuaternion.multiplyQuaternions(quaternion, curQuaternion);
+        curQuaternion.normalize();
+        this.object.setRotationFromQuaternion(curQuaternion);
     },
     rotateMatrix:function(rotateStart, rotateEnd)
     {
@@ -109,16 +142,102 @@ kk.RotateControl = kk.Class.extend({
         }
         return quaternion;
     },
-    schedule:function(){
+    rotateByAxisY:function(oldQuaternion, angle){
+        var axis = new THREE.Vector3(0,1,0);
+        var quaternion = new THREE.Quaternion();
+        quaternion.setFromAxisAngle(axis, -angle);
+        var curQuaternion = oldQuaternion.clone();
+        curQuaternion.multiplyQuaternions(quaternion, curQuaternion);
+        curQuaternion.normalize();
+        this.object.setRotationFromQuaternion(curQuaternion);
+    },
+    onRotate:function(e){
+        if(e.type==="rotatestart") {
+            //g_msg.setString("rotatestart");
+            this.rotating = true;
+            this.objQuaternion = this.object.quaternion.clone();
+            this.nowAngle = 0;
+            this.lastAngle = 0;
+        }
+        else if(e.type=="rotatemove"){
+            if(!this.rotating) alert("not start rotatemove...");
+            //g_msg.setString("moveNow:"+this.nowAngle);
+            //g_msg2.setString("e:"+e.rotation);
+
+            var angle = this.nowAngle/180*Math.PI * this.rotateSpeed;
+            this.rotateByAxisY(this.objQuaternion, angle);
+            this.lastAngle = this.nowAngle;
+            this.nowAngle = e.rotation;
+            this.lastMoveTimestamp = new Date();
+        }
+        else if(e.type==="rotateend"){
+            if(this.updateStatus !== "") return;
+            var t = new Date().getTime() - this.lastMoveTimestamp.getTime();
+            if (new Date().getTime() - this.lastMoveTimestamp.getTime() > this.moveReleaseTimeDelta)
+            {
+                this.updateAngle = 0;
+            }
+            else {
+                this.updateAngle = (e.rotation - this.lastAngle)/180*Math.PI;
+                if(this.updateAngle<-1.8)
+                    this.updateAngle+=Math.PI;
+                else if(this.updateAngle>1.8)
+                    this.updateAngle-=Math.PI;
+                this.schedule("rotate");
+            }
+            //g_msg.setString("t,a:"+t+","+this.updateAngle);
+            //g_msg2.setString("update:"+this.updateAngle);
+            return;
+        }
+
+
+        /*
+        if(!this.rotating) return;
+        if(e.type==="rotateend"){
+            //g_msg.setString("rotateend");
+            this.rotating = false;
+            return;
+        }
+        var angle = e.rotation;
+        g_msg.setString("e:"+this.lastAngle);
+        g_msg2.setString("e:"+angle);
+        var deltaAngle = (angle-this.lastAngle)/180*Math.PI;
+        if(deltaAngle>2)
+            deltaAngle-=Math.PI*2;
+        else if(deltaAngle<-2)
+            deltaAngle+=Math.PI*2;
+        this.lastAngle = angle;
+        var axis = new THREE.Vector3(0,1,0);
+        var quaternion = new THREE.Quaternion();
+        quaternion.setFromAxisAngle(axis, -deltaAngle);
+        this.executeRoation(quaternion);
+        */
+    },
+    schedule:function(status){
+        if(this.updateStatus !== "")
+            return;
+        this.updateStatus = status;
         kk.director.getScheduler().scheduleUpdate(this, 0, false);
     },
     unschedule:function(){
+        this.updateStatus = "";
         kk.director.getScheduler().unscheduleUpdate(this);
     },
     update:function(dt){
-        if (!this.mouseDown && this.deltaX !== 0 && this.deltaY !== 0)
+        if(this.updateStatus === "rotate" && this.updateAngle!==0){
+            if(this.updateAngle<-0.05 || this.updateAngle > 0.05){
+                this.updateAngle *= 0.9;
+                //g_msg2.setString("update:"+this.updateAngle);
+                this.rotateByAxisY(this.object.quaternion, this.updateAngle);
+            }
+            else{
+                this.updateAngle = 0;
+                this.unschedule();
+            }
+        }
+        else if(this.updateStatus == "pan" && this.deltaX !== 0 && this.deltaY !== 0)
         {
-            var drag = 0.95;
+            var drag = 0.9;
             var minDelta = 0.05;
 
             if (this.deltaX < -minDelta || this.deltaX > minDelta)
@@ -141,24 +260,22 @@ kk.RotateControl = kk.Class.extend({
 
             this.handleRotation();
         }
-        else
+        else{
             this.unschedule();
+        }
     },
     registerListener : function() {
-        var scope = this;
         this.listener = kk.EventListener.create({
             event: kk.EventListener.TOUCH,
             swallowTouches: false,
-            onPan: function (e) {
-                if(e.type=="panstart")
-                    scope.onPanStart({x: e.center.x,y: e.center.y});
-                else if(e.type == "panmove"){
-                    scope.onPanMove({x: e.center.x,y: e.center.y,deltaX: e.deltaX, deltaY: e.deltaY});
-                }
-                else if(e.type == "panend")
-                    scope.onPanEnd({x: e.center.x,y: e.center.y});
-            }
+            onPan: this.onPan.bind(this),
+            onRotate:this.onRotate.bind(this),
+            onPress:this.onPress.bind(this)
         });
         kk.eventManager.addListener(this.listener);
+    },
+    removeSelf:function(){
+        kk.director.getScheduler().unscheduleUpdate(this);
+        kk.eventManager.removeListener(this.listener);
     }
 });
