@@ -15,8 +15,11 @@
     "libs/OBJLoader.js",
     "libs/MTLLoader.js",
     "libs/OBJMTLLoader.js",
+    "res/heiti.typeface.js",
+    "res/helvetiker_regular.typeface.js",
 
     "src/playScene.js",
-    "src/RotateControl.js"
+    "src/RotateControl.js",
+    "src/TextManager.js"
   ]
 }

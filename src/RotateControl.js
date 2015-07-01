@@ -72,7 +72,7 @@ kk.RotateControl = kk.Class.extend({
 
         this.rotateStart.copy( this.projectOnTrackball(0,0));
         this.rotateEnd.copy(this.rotateStart);
-        kk.log("onPanStart:",event.x,event.y,this.deltaX,this.deltaY);
+        //kk.log("onPanStart:",event.x,event.y,this.deltaX,this.deltaY);
     },
     onPanMove:function(event){
         if(!this._panStart){
@@ -90,7 +90,7 @@ kk.RotateControl = kk.Class.extend({
         this.startPoint.y = event.y;
 
         this.lastMoveTimestamp = new Date();
-        kk.log("onPanMove:",event.x,event.y,this.deltaX,this.deltaY);
+        //kk.log("onPanMove:",event.x,event.y,this.deltaX,this.deltaY);
     },
     onPanEnd:function(event){
         if(!this._panStart) return;

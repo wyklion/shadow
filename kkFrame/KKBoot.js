@@ -1467,7 +1467,7 @@ kk.game = {
             touchEvent._eventCode = kk.EventTouch.EventCode.TAP;
             kk.eventManager.dispatchEvent(touchEvent);
         });
-        kk.hammer.on("press", function (e) {
+        kk.hammer.on("press pressup", function (e) {
             var touchEvent = new kk.EventTouch(e);
             touchEvent._eventCode = kk.EventTouch.EventCode.PRESS;
             kk.eventManager.dispatchEvent(touchEvent);

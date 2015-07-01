@@ -196,8 +196,11 @@
                 <file name="libs/OBJLoader.js"/>
                 <file name="libs/MTLLoader.js"/>
                 <file name="libs/OBJMTLLoader.js"/>
+                <file name="res/heiti.typeface.js"/>
+                <file name="res/helvetiker_regular.typeface.js"/>
                 <file name="src/playScene.js"/>
                 <file name="src/RotateControl.js"/>
+                <file name="src/TextManager.js"/>
                 <file name="main.js"/>
 
             </sources>
