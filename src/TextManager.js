@@ -16,15 +16,15 @@ function toUnicode(theString) {
 
 var TextManager = {
     options:{
-        size: 10,
-        height: 5,
+        size: 9,
+        height: 9,
         weight: 'normal',
         font: 'heiti',
         //font: 'helvetiker',
         bevelThickness: 1,
         bevelSize: 0.2,
         bevelSegments: 1,
-        bevelEnabled: true,
+        bevelEnabled: false,
         curveSegments: 12,
         steps: 2
     },
@@ -66,8 +66,8 @@ var TextManager = {
                 var geoms = this.getOneWordGeom(word);
                 for(var k=0;k<geoms.length;k++){ //一个字里拆出来的东西
                     geoms[k].applyMatrix( new THREE.Matrix4().setPosition( {
-                        x:(j-midCol)*this.options.size*1.2,
-                        y:-i*this.options.size*1.4,
+                        x:(j-midCol)*this.options.size*1.4,
+                        y:-i*this.options.size*1.6,
                         z:-4*this.options.height+Math.random()*8*this.options.height} ) );
                     var random = Math.random();
                     if(!twoPieces || random<0.5)
@@ -156,7 +156,7 @@ var TextManager = {
         return obj;
     },
     getOneWordGeom:function(word){
-        var table = this.textTable[word];
+        var table = text_info.table[word];
         var geoms = new Array();
         if(table){
             for(var i=0;i<table.length;i++){
@@ -186,6 +186,13 @@ var TextManager = {
             color: 0xeeffff,
             shininess: 100,
             metal: true
+        });
+        var floorTex = THREE.ImageUtils.loadTexture("res/brick-wall.jpg");
+        floorTex.wrapT = THREE.RepeatWrapping;
+        floorTex.wrapS = THREE.RepeatWrapping;
+        var mat = new THREE.MeshLambertMaterial({
+            color: 0xffffff,
+            map: floorTex
         });
         //            meshMaterial.side=THREE.DoubleSide;
         // create a multimaterial

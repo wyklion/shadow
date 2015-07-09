@@ -15,11 +15,21 @@
     "libs/OBJLoader.js",
     "libs/MTLLoader.js",
     "libs/OBJMTLLoader.js",
-    "res/heiti.typeface.js",
-    "res/helvetiker_regular.typeface.js",
+
+    "src/postprocessing/EffectComposer.js",
+    "src/postprocessing/RenderPass.js",
+    "src/postprocessing/ShaderPass.js",
+    "src/postprocessing/MaskPass.js",
+    "src/postprocessing/FilmPass.js",
+    "src/postprocessing/BloomPass.js",
+    "src/shaders/CopyShader.js",
+    "src/shaders/SepiaShader.js",
+    "src/shaders/FilmShader.js",
+    "src/shaders/ConvolutionShader.js",
 
     "src/playScene.js",
     "src/RotateControl.js",
-    "src/TextManager.js"
+    "src/TextManager.js",
+    "src/GetInfo.js"
   ]
 }

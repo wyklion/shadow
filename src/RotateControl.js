@@ -1,7 +1,6 @@
 /**
  * Created by kk on 2015/6/5.
  */
-
 kk.RotateControl = kk.Class.extend({
     listener:null,
     enabled:true,
@@ -32,9 +31,15 @@ kk.RotateControl = kk.Class.extend({
     {
         var mouseOnBall = new THREE.Vector3();
         mouseOnBall.set(
-            this.clamp(touchX / this.windowHalfX, -1, 1), this.clamp(-touchY / this.windowHalfY, -1, 1),
-            0.0
+            this.clamp(touchX / this.windowHalfX, -1, 1),
+            0,
+            this.clamp(touchY / this.windowHalfY, -1, 1)
         );
+        //mouseOnBall.set(
+        //    this.clamp(touchX / this.windowHalfX, -1, 1),
+        //    this.clamp(-touchY / this.windowHalfY, -1, 1),
+        //    0.0
+        //);
         var length = mouseOnBall.length();
         if (length > 1.0)
         {
@@ -42,7 +47,8 @@ kk.RotateControl = kk.Class.extend({
         }
         else
         {
-            mouseOnBall.z = Math.sqrt(1.0 - length * length);
+            //mouseOnBall.z = Math.sqrt(1.0 - length * length);
+            mouseOnBall.y = Math.sqrt(1.0 - length * length);
         }
         return mouseOnBall;
     },
@@ -120,12 +126,6 @@ kk.RotateControl = kk.Class.extend({
         curQuaternion.normalize();
         this.object.setRotationFromQuaternion(curQuaternion);
         this.rotateEnd.copy(this.rotateStart);
-    },
-    executeRoation:function(quaternion){
-        var curQuaternion = this.object.quaternion;
-        curQuaternion.multiplyQuaternions(quaternion, curQuaternion);
-        curQuaternion.normalize();
-        this.object.setRotationFromQuaternion(curQuaternion);
     },
     rotateMatrix:function(rotateStart, rotateEnd)
     {
@@ -277,5 +277,88 @@ kk.RotateControl = kk.Class.extend({
     removeSelf:function(){
         kk.director.getScheduler().unscheduleUpdate(this);
         kk.eventManager.removeListener(this.listener);
+    }
+});
+
+
+kk.DoubleRotateControl = kk.RotateControl.extend({
+    ctor: function (obj1, obj2, camera) {
+        this.obj1 = obj1;
+        this.obj2 = obj2;
+        this.center = this.obj1.position.clone().add(this.obj2.position).multiplyScalar(0.5);
+        kk.log("center:",this.center);
+        this.init();
+        this.registerListener();
+    },
+    projectOnTrackball:function (touchX, touchY)
+    {
+        var mouseOnBall = new THREE.Vector3();
+        mouseOnBall.set(
+            this.clamp(touchX / this.windowHalfX, -1, 1),
+            0,
+            this.clamp(touchY / this.windowHalfY, -1, 1)
+        );
+        var length = mouseOnBall.length();
+        if (length > 1.0)
+        {
+            mouseOnBall.normalize();
+        }
+        else
+        {
+            mouseOnBall.y = Math.sqrt(1.0 - length * length);
+        }
+        return mouseOnBall;
+    },
+    handleRotation:function(){
+        this.rotateEnd = this.projectOnTrackball(this.deltaX, this.deltaY);
+
+        var quaternion = this.rotateMatrix(this.rotateStart, this.rotateEnd);
+        var obj1Sub = this.obj1.position.clone().sub(this.center);
+        var obj1SubNew = obj1Sub.applyQuaternion(quaternion);
+        this.obj1.position.copy(this.center.clone().add(obj1SubNew));
+        var obj2Sub = this.obj2.position.clone().sub(this.center);
+        var obj2SubNew = obj2Sub.applyQuaternion(quaternion);
+        this.obj2.position.copy(this.center.clone().add(obj2SubNew));
+
+        this.rotateEnd.copy(this.rotateStart);
+    },
+    update:function(dt){
+        if(this.updateStatus == "pan" && this.deltaX !== 0 && this.deltaY !== 0)
+        {
+            var drag = 0.9;
+            var minDelta = 0.05;
+
+            if (this.deltaX < -minDelta || this.deltaX > minDelta)
+            {
+                this.deltaX *= drag;
+            }
+            else
+            {
+                this.deltaX = 0;
+            }
+
+            if (this.deltaY < -minDelta || this.deltaY > minDelta)
+            {
+                this.deltaY *= drag;
+            }
+            else
+            {
+                this.deltaY = 0;
+            }
+
+            this.handleRotation();
+        }
+        else{
+            this.unschedule();
+        }
+    },
+    registerListener : function() {
+        this.listener = kk.EventListener.create({
+            event: kk.EventListener.TOUCH,
+            swallowTouches: false,
+            onPan: this.onPan.bind(this),
+            onPress:this.onPress.bind(this)
+        });
+        kk.eventManager.addListener(this.listener);
     }
 });
