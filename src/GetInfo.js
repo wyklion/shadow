@@ -46,6 +46,8 @@ function createXMLHttpRequest()
 function getInfo(callback)
 {
     var msgid = GetQueryString("id");
+    if(msgid == null)
+        msgid = "16";
     createXMLHttpRequest();
     xmlHttp.onload = function() {
         if (xmlHttp.status >= 200 && xmlHttp.status < 400) {

@@ -77,8 +77,8 @@ var PlayScene = kk.Class.extend({
 
         // create a scene, that will hold all our elements such as objects, cameras and lights.
         scene = new THREE.Scene();
-        //scene.fog=new THREE.FogExp2( 0xffffff, 1 );
-        //scene.fog = new THREE.Fog(0xddbbaa, 0.005, 300);
+        scene.fog=new THREE.FogExp2( 0xffffff, 0.0015 );
+        //scene.fog = new THREE.Fog(0xffffff, 0.015, 800);
         //scene.overrideMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
 
         // create a camera, which defines where we're looking at.

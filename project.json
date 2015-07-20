@@ -9,12 +9,12 @@
   "modules" : ["common", "extras"],
 
   "jsList" : [
-    "libs/stats.js",
-    "libs/OrbitControls.js",
-    "libs/tween.min.js",
-    "libs/OBJLoader.js",
-    "libs/MTLLoader.js",
-    "libs/OBJMTLLoader.js",
+    "src/libs/stats.js",
+    "src/libs/OrbitControls.js",
+    "src/libs/tween.min.js",
+    "src/libs/OBJLoader.js",
+    "src/libs/MTLLoader.js",
+    "src/libs/OBJMTLLoader.js",
 
     "src/postprocessing/EffectComposer.js",
     "src/postprocessing/RenderPass.js",
@@ -28,7 +28,6 @@
     "src/shaders/ConvolutionShader.js",
 
     "src/playScene.js",
-    "src/RotateControl.js",
     "src/TextManager.js",
     "src/GetInfo.js"
   ]
